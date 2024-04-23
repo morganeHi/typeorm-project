@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb
+    restart: always
+    environment: 
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - data:/var/lib/mysql
+    ports:
+      - "${PORT}:${PORT}"
+
+
+volumes:
+  data:
