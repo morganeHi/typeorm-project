@@ -1,21 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {Participation} from './Participation';
 
 @Entity()
 export class User {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id: number;
 
     @Column()
-    firstName: string
+    firstName: string;
 
     @Column()
-    lastName: string
+    lastName: string;
+
+    @Column({ type: 'date' })
+    birthDate: Date;
+
+    @Column({unique: true})
+    mail: string;
 
     @Column()
-    age: number
+    password: string;
 
-    @Column()
-    mail: string
+    @Column({ type: 'date' })
+    inscriptionDate: Date;
 
+    @OneToMany(() => Participation, participation => participation.user)
+    participations: Participation[];
 }
