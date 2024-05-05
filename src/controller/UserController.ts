@@ -1,7 +1,8 @@
 import { AppDataSource } from "../data-source";
 import { NextFunction, Request, Response } from "express";
 import { User } from "../entity/User";
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 export class UserController {
 
@@ -11,8 +12,8 @@ export class UserController {
             const users = await userRepository.find();
             response.send(users);
         } catch (error) {
-            console.log('Error occurred in fetching users:', error);
-            response.status(500).send({ error: 'Internal Server Error' });
+            console.log('An error occurred in fetching users:', error);
+            response.status(500).send({ error: 'An error occurred in fetching users' });
         }
     }
 
@@ -25,13 +26,12 @@ export class UserController {
                 where: { id }
             });
     
-            if (!user) {
-                return "unregistered user";
-            }
+            if (!user) return response.status(400).send("Unregistered user");
+                
             response.send(user);
         } catch (error) {
             console.log('Error occurred in fetching user:', error);
-            response.status(500).send({ error: 'Internal Server Error' });
+            response.status(500).send({ error: 'An error occurred in fetching user' });
         }
     }
 
@@ -57,36 +57,61 @@ export class UserController {
                 password
             });
     
-            const saved = await userRepository.save(user)
+            const saved = await userRepository.save(user);
+            // note : need to get rid of password before sending to client !!!
     
             response.status(201).send(saved);
         } catch (error) {
-            console.log('Error occurred in saving user:', error);
-            response.status(500).send({ error: error });
+            console.log('An error occurred in saving user:', error);
+            response.status(500).send({ error: "An error occurred in saving user" });
+        }
+    }
+
+    async login(request: Request, response: Response, next: NextFunction) {
+        try {
+            const userRepository = AppDataSource.getRepository(User);
+            const user = await userRepository.findOneBy({mail : request.body.mail });
+
+            if (!user) return response.status(400).send("Unknown email");
+
+            const verifyPassword = await bcrypt.compare(request.body.password, user.password);
+            if (!verifyPassword) return response.status(400).send("Incorrect password");
+
+            const token = jwt.sign(
+                {userId : user.id},
+                process.env.PRIVATE_KEY,
+                {expiresIn: '1h'}
+            );
+
+            response.send({token});
+
+        } catch (error) {
+            response.status(500).send({ error: "An error occurred during login" });
         }
     }
 
     async modify(request: Request, response: Response, next: NextFunction) {
         try {
             const id = parseInt(request.params.id);
+            const { firstName, lastName, mail, birthDate } = request.body;
 
             const userRepository = AppDataSource.getRepository(User);
             let user = await userRepository.findOne({ where: { id }});
 
             if (!user) return response.status(400).send({ error: "Unknown user" });
 
-            if (request.body.firstName) user.firstName = request.body.firstName;
-            if (request.body.lastName) user.lastName = request.body.lastName;
-            if (request.body.mail) user.mail = request.body.mail;
-            if (request.body.birthDate) user.birthDate = request.body.birthDate;
+            if (firstName) user.firstName = request.body.firstName;
+            if (lastName) user.lastName = lastName;
+            if (mail) user.mail = request.body.mail;
+            if (birthDate) user.birthDate = request.body.birthDate;
 
             user = await userRepository.save(user);
 
             response.send(user);
 
-        } catch (error) {
+        } catch (error) {   
             console.log('Error occurred in updating user:', error);
-            response.status(500).send({ error: error });
+            response.status(500).send({ error: "An error occurred in updating user" });
         }
     }
 
@@ -106,8 +131,7 @@ export class UserController {
             response.send('User successfully removed');
         } catch (error) {
             console.log('Error occurred in removing user:', error);
-            response.status(500).send({ error: 'Internal Server Error' });
+            response.status(500).send({ error: 'An error occurred in removing user' });
         }
     }
-
 }
