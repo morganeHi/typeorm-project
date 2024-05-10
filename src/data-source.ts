@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
     synchronize: true, // false in production
-    logging: true, // false in production
+    logging: false, // false in production
     entities: [User, Participation],
     migrations: [],
     subscribers: [],

@@ -6,10 +6,17 @@ import * as jwt from 'jsonwebtoken';
 
 export class UserController {
 
-    async all(request: Request, response: Response, next: NextFunction) {
+    private userRepository; // declare property userRepository
+
+    constructor() {
+        // Initialize userRepository in the constructor
+        this.userRepository = AppDataSource.getRepository(User);
+    }
+
+    // NOTE : Arrow functions do not have their own "this" context and instead inherit the "this" from the surrounding context (in this case, the UserController instance)
+    all = async (request: Request, response: Response, next: NextFunction) => {
         try {
-            const userRepository = AppDataSource.getRepository(User);
-            const users = await userRepository.find();
+            const users = await this.userRepository.find();
             response.send(users);
         } catch (error) {
             console.log('An error occurred in fetching users:', error);
@@ -17,12 +24,11 @@ export class UserController {
         }
     }
 
-    async one(request: Request, response: Response, next: NextFunction) {
+    one =  async (request: Request, response: Response, next: NextFunction) => {
         try {
             const id = parseInt(request.params.id);
 
-            const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOne({
+            const user = await this.userRepository.findOne({
                 where: { id }
             });
     
@@ -35,12 +41,11 @@ export class UserController {
         }
     }
 
-    async save(request: Request, response: Response, next: NextFunction) {
+    save = async (request: Request, response: Response, next: NextFunction) => {
         try {
             const { firstName, lastName, mail, birthDate, pass } = request.body;
 
-            const userRepository = AppDataSource.getRepository(User);
-            const exists = await userRepository.findOne({ where: { mail }});
+            const exists = await this.userRepository.findOne({ where: { mail }});
 
             if (exists) return response.status(400).send({ error: 'User with this email already exists' });
               
@@ -57,20 +62,18 @@ export class UserController {
                 password
             });
     
-            const saved = await userRepository.save(user);
-            // note : need to get rid of password before sending to client !!!
+            const saved = await this.userRepository.save(user);
     
-            response.status(201).send(saved);
+            response.status(201).send("Successful registration");
         } catch (error) {
             console.log('An error occurred in saving user:', error);
             response.status(500).send({ error: "An error occurred in saving user" });
         }
     }
 
-    async login(request: Request, response: Response, next: NextFunction) {
+    login = async (request: Request, response: Response, next: NextFunction) => {
         try {
-            const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOneBy({mail : request.body.mail });
+            const user = await this.userRepository.findOneBy({mail : request.body.mail });
 
             if (!user) return response.status(400).send("Unknown email");
 
@@ -90,13 +93,12 @@ export class UserController {
         }
     }
 
-    async modify(request: Request, response: Response, next: NextFunction) {
+    modify = async (request: Request, response: Response, next: NextFunction) => {
         try {
             const id = parseInt(request.params.id);
             const { firstName, lastName, mail, birthDate } = request.body;
 
-            const userRepository = AppDataSource.getRepository(User);
-            let user = await userRepository.findOne({ where: { id }});
+            let user = await this.userRepository.findOne({ where: { id }});
 
             if (!user) return response.status(400).send({ error: "Unknown user" });
 
@@ -105,7 +107,7 @@ export class UserController {
             if (mail) user.mail = request.body.mail;
             if (birthDate) user.birthDate = request.body.birthDate;
 
-            user = await userRepository.save(user);
+            user = await this.userRepository.save(user);
 
             response.send(user);
 
@@ -115,18 +117,17 @@ export class UserController {
         }
     }
 
-    async remove(request: Request, response: Response, next: NextFunction) {
+    remove = async (request: Request, response: Response, next: NextFunction) => {
         try {
             const id = parseInt(request.params.id);
 
-            const userRepository = AppDataSource.getRepository(User);
-            let userToRemove = await userRepository.findOneBy({ id });
+            let userToRemove = await this.userRepository.findOneBy({ id });
     
             if (!userToRemove) {
                 return "this user not exist";
             }
     
-            await userRepository.remove(userToRemove)
+            await this.userRepository.remove(userToRemove)
     
             response.send('User successfully removed');
         } catch (error) {

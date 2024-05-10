@@ -11,6 +11,6 @@ router.get('/:id', userController.one);
 router.post('/', userController.save);
 router.post('/login', userController.login);
 router.patch('/:id', verifyToken, userController.modify);
-router.delete('/:id', userController.remove);
+router.delete('/:id', verifyToken, userController.remove);
 
 export default router;

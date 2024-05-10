@@ -10,7 +10,7 @@ export const verifyToken = (request: Request, response: Response, next: NextFunc
         if (!token) return response.status(401).send("No auth token provided");
 
         request.user = jwt.verify(token, process.env.PRIVATE_KEY);
-        console.log("Decoded token ", request.user);
+        console.log("Decoded token : ", request.user);
         
         next();
     } catch (error) {
