@@ -16,7 +16,7 @@ export class ParticipationController {
             response.send(participations);
         } catch (error) {
             console.log('An error occurred in fetching users participations:', error);
-            response.status(500).send({ error: 'Internal Server Error' });
+            response.status(500).send({ error: 'An error occurred in fetching users participations' });
         }
     }
 

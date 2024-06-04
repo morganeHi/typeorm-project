@@ -44,6 +44,7 @@ export class UserController {
     save = async (request: Request, response: Response, next: NextFunction) => {
         try {
             const { firstName, lastName, mail, birthDate, pass } = request.body;
+            console.log(request.body)
 
             const exists = await this.userRepository.findOne({ where: { mail }});
 
@@ -86,10 +87,23 @@ export class UserController {
                 {expiresIn: '1h'}
             );
 
-            response.send({token});
+            response.cookie("token", token, {
+                origin: "http://localhost:3000",
+                maxAge: 3600000,
+                httpOnly: true,
+                //secure: true,
+                sameSite: "Lax",
+            })
+            .cookie("authenticated", true, {
+                origin: "http://localhost:3000",
+                maxAge: 3600000,
+                //secure: true,
+                sameSite: "Lax",
+            });
+            response.json({ message: 'Login successful'});
 
         } catch (error) {
-            response.status(500).send({ error: "An error occurred during login" });
+            response.status(500).json({ error: "An error occurred during login" });
         }
     }
 
